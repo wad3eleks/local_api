@@ -1,0 +1,17 @@
+{
+  "appElementName": "mnc-notes",
+  "configuration": null,
+  "fqan": "NotesService",
+  "scriptUrls": [
+    "{{url}}/polyfills.js",
+    "{{url}}/vendor.js",
+    "{{url}}/runtime.js",
+    "{{url}}/main.js"
+  ],
+  "styleUrls": [
+    "{{url}}/styles.css"
+  ],
+  "widgets": [
+
+  ]
+}
