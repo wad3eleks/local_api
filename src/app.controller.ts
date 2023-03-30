@@ -48,7 +48,7 @@ export class AppController {
 
     return res.status(HttpStatus.OK).json(
       {
-        config,
+        ...config,
         scriptUrls: config.scriptUrls.map((url) => `${source}/${url}`),
         styleUrls: config.styleUrls.map((url) => `${source}/${url}`)
       }
