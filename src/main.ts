@@ -18,7 +18,9 @@ async function bootstrap() {
       },
     }),
   );
-  await app.listen(3001);
+  await app.listen(3001, 'localhost');
+  const appUrl = await app.getUrl();
+  console.log(`Listening at ${appUrl}`);
 }
 
 bootstrap();

@@ -1,16 +1,16 @@
-import { Controller, Get, HttpStatus, Param, Res, Response } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as fs from 'node:fs/promises';
-import { join } from 'path';
-
-const envApplicationConfigMap = {
-  'mnc-dmepos': 'DMEPOS_URL',
-  'mnc-notes': 'NOTES_URL',
-};
+import { Response } from 'express';
 
 @Controller()
 export class AppController {
-  constructor(private configService: ConfigService) {}
+  private readonly appConfigMap = {
+    'mnc-dmepos': this.configService.get('DMEPOS_URL'),
+    'mnc-notes': this.configService.get('NOTES_URL'),
+  }
+
+  constructor(private configService: ConfigService) {
+  }
 
   @Get()
   ping(): string {
@@ -19,16 +19,40 @@ export class AppController {
 
   @Get('/elements/:config')
   async elements(@Param('config') name: string, @Res() res: Response) {
-    const file: any = await fs.readFile(join(process.cwd(), `elements/${name.toLowerCase()}`), 'utf-8');
-    const config = JSON.parse(file);
-    const source = this.configService.get<string>(envApplicationConfigMap[config.appElementName]);
+    const applicationKey = Object.keys(this.appConfigMap).find((key) => name.includes(key));
 
+    if (!applicationKey) {
+      return res
+        .status(HttpStatus.NOT_FOUND)
+        .json({ status: HttpStatus.NOT_FOUND, message: 'Configuration was not found' });
+    }
+
+    const config = {
+      appElementName: applicationKey,
+      fqan: applicationKey,
+      scriptUrls: [
+        'polyfills.js',
+        'vendor.js',
+        'runtime.js',
+        'main.js'
+      ],
+      styleUrls: [
+        'styles.css'
+      ],
+      widgets: []
+    }
+
+    const source = this.appConfigMap[applicationKey];
     config.scriptUrls = config.scriptUrls.map((url) => url.replace('{{url}}', source));
     config.styleUrls = config.styleUrls.map((url) => url.replace('{{url}}', source));
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    res.status(HttpStatus.OK).json(config);
+    return res.status(HttpStatus.OK).json(
+      {
+        config,
+        scriptUrls: config.scriptUrls.map((url) => `${source}/${url}`),
+        styleUrls: config.styleUrls.map((url) => `${source}/${url}`)
+      }
+    );
   }
 
   @Get('/applications/element-names')
