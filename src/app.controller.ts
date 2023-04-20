@@ -20,8 +20,9 @@ export class AppController {
   @Get('/elements/:config')
   async elements(@Param('config') name: string, @Res() res: Response) {
     const applicationKey = Object.keys(this.appConfigMap).find((key) => name.includes(key));
+    const source = this.appConfigMap[applicationKey];
 
-    if (!applicationKey) {
+    if (!applicationKey || !source) {
       return res
         .status(HttpStatus.NOT_FOUND)
         .json({ status: HttpStatus.NOT_FOUND, message: 'Configuration was not found' });
@@ -42,17 +43,14 @@ export class AppController {
       widgets: []
     }
 
-    const source = this.appConfigMap[applicationKey];
     config.scriptUrls = config.scriptUrls.map((url) => url.replace('{{url}}', source));
     config.styleUrls = config.styleUrls.map((url) => url.replace('{{url}}', source));
 
-    return res.status(HttpStatus.OK).json(
-      {
-        ...config,
-        scriptUrls: config.scriptUrls.map((url) => `${source}/${url}`),
-        styleUrls: config.styleUrls.map((url) => `${source}/${url}`)
-      }
-    );
+    return res.status(HttpStatus.OK).json({
+      ...config,
+      scriptUrls: config.scriptUrls.map((url) => `${source}/${url}`),
+      styleUrls: config.styleUrls.map((url) => `${source}/${url}`)
+    });
   }
 
   @Get('/applications/element-names')
