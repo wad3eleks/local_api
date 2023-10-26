@@ -7,6 +7,7 @@ export class AppController {
   private readonly appConfigMap = {
     'mnc-dmepos': this.configService.get('DMEPOS_URL'),
     'mnc-notes': this.configService.get('NOTES_URL'),
+    'mnc-document': this.configService.get('DOCUMENTS_URL'),
   }
 
   constructor(private configService: ConfigService) {
@@ -18,8 +19,8 @@ export class AppController {
   }
 
   @Get('/elements/:config')
-  async elements(@Param('config') name: string, @Res() res: Response) {
-    const applicationKey = Object.keys(this.appConfigMap).find((key) => name.includes(key));
+  async elements(@Param('config') name: string = '', @Res() res: Response) {
+    const applicationKey = Object.keys(this.appConfigMap).find((key) => name.toLowerCase().includes(key));
     const source = this.appConfigMap[applicationKey];
 
     if (!applicationKey || !source) {
