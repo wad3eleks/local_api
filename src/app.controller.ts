@@ -1,6 +1,7 @@
-import { Controller, Get, HttpStatus, Param, Res } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Res, Headers } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
+import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
@@ -10,7 +11,10 @@ export class AppController {
     'mnc-document': this.configService.get('DOCUMENTS_URL'),
   }
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private appService: AppService,
+  ) {
   }
 
   @Get()
@@ -19,14 +23,21 @@ export class AppController {
   }
 
   @Get('/elements/:config')
-  async elements(@Param('config') name: string = '', @Res() res: Response) {
+  async elements(@Param('config') name = '', @Headers() headers: any, @Res() res: Response) {
     const applicationKey = Object.keys(this.appConfigMap).find((key) => name.toLowerCase().includes(key));
     const source = this.appConfigMap[applicationKey];
 
-    if (!applicationKey || !source) {
+    if (!applicationKey) {
       return res
         .status(HttpStatus.NOT_FOUND)
         .json({ status: HttpStatus.NOT_FOUND, message: 'Configuration was not found' });
+    }
+
+    if (!source) {
+      const { authorization } = headers;
+      const { data } = await this.appService.getAppConfig(name, { authorization });
+
+      return res.status(HttpStatus.OK).json(data);
     }
 
     const config = {
